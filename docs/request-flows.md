@@ -2,7 +2,7 @@
 
 This document shows the main storage flows at a system level.
 
-These flows are backed by the excerpt files under [../excerpts](../excerpts/README.md), not just by prose.
+These flows are backed by the excerpt files under [../excerpts](../excerpts/README.md).
 
 ## 1. User Asset Upload
 

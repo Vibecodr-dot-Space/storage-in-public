@@ -2,7 +2,7 @@
 
 This repo is derived from the private Vibecodr source tree, but it is not a subtree export.
 
-The point of this document is to show where the public evidence came from and why those files were chosen.
+This document shows where the public evidence came from and why those files were chosen.
 
 ## Source Areas Used
 
@@ -75,14 +75,14 @@ Reasons:
 - some files contain too much operational or migration detail to be useful in one shot
 - a curated transparency repo should help readers understand the system, not drown them in 2000-line files
 
-## A More Honest Summary
+## Summary
 
 The private source looks like a real long-lived platform subsystem:
 
 - large modules
 - explicit repair paths
 - migration compatibility
-- defensive serving code
+- careful serving code
 - tests around uncomfortable behavior
 
-This public repo should be read as a guided window into that system, not as a claim that the original codebase is small or pretty.
+This public repo should be read as a guided window into that system, not as a claim that the original codebase is small or tidy.

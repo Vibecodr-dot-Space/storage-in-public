@@ -26,7 +26,7 @@ Private download routes do application-layer work before a byte is returned:
 - CSP and `X-Content-Type-Options: nosniff`,
 - HTTP Range handling.
 
-That means the "storage product" boundary is the Worker, not the bucket URL.
+That means the effective storage boundary is the Worker, not the bucket URL.
 
 ### Public Does Not Mean Everything On The Same Bucket Is Public
 

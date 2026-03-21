@@ -1,14 +1,12 @@
 # storage-in-public
 
-This repo exists because we do not want Vibecodr's storage architecture to be smoke and mirrors.
+This repo is a public tour of the storage system behind Vibecodr.
 
-It is not a generic storage framework. It is a transparency repo built from the real production storage system behind Vibecodr: the bucket topology, the D1 control plane, the public artifact mirror lane, the blob store, the secure serving layer, the migration compatibility paths, and the repair jobs that keep the whole thing from drifting apart.
-
-If you are trying to answer "did these people actually build a serious platform?" this repo is meant to help with that.
+It is not a generic storage framework. It is a source-backed explanation of how we use Cloudflare R2, D1, and Workers for uploads, runtime artifacts, public media, deduplicated blobs, secure serving, and cleanup.
 
 ## What This Repo Contains
 
-- blunt docs about how the storage system is shaped and why it is shaped that way
+- docs about how the storage system is shaped and why it is shaped that way
 - curated source excerpts from the real production repo
 - selected test excerpts that show we actually pinned tricky behavior
 - simplified reference artifacts for schema and keyspace orientation
@@ -30,7 +28,7 @@ The actual subsystem is large and cross-coupled because it sits at the center of
 - migration compatibility
 - cleanup and reconciliation
 
-We think it builds more trust to say that directly than to pretend this is a neat little library.
+This is a real product subsystem, and it behaves like one.
 
 ## Start Here
 
@@ -51,13 +49,11 @@ At extraction time, some of the core source files in the private repo were appro
 | `workers/api/src/storage/r2ObjectIndex.ts` | 1506 | ownership index, quota categories, visibility, bucket resolution |
 | `workers/api/src/services/storage/storageBrowserService.ts` | 1178 | storage browser and user-facing object/capsule views |
 
-That size is not something we are proud of aesthetically, but it is evidence that the system is carrying real platform concerns and not just a toy upload flow.
+These are not small files, and that is part of the story. Storage here is tied to runtime delivery, quota math, visibility, compatibility, and repair flows.
 
-## What We Think Actually Builds Trust
+## What You Will Find Here
 
-Not polished prose by itself. Evidence.
-
-This repo includes evidence of:
+This repo includes:
 
 - key migrations that happened because earlier assumptions were wrong
 - cross-bucket fallback behavior for free-to-paid storage transitions
@@ -96,7 +92,7 @@ reference/
 ```
 
 - `docs/` explains the system in plain language
-- `excerpts/` shows selected real source and test fragments
+- `excerpts/` shows selected source and test fragments
 - `reference/` contains lighter-weight orientation artifacts
 
 ## License

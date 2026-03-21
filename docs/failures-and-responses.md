@@ -1,12 +1,12 @@
 # Failures And Responses
 
-This document exists because "trust us, we thought about it" is weaker than "here is what went wrong and where the response lives."
+This document covers a few of the moments that shaped the current storage system.
 
-Every section below points to an excerpt file in this repo.
+Each section below points to an excerpt file in this repo.
 
 ## 1. Capsule File Keys Were Too Broad
 
-What went wrong:
+What changed:
 
 - content-addressed capsule keys looked elegant
 - they were too broad for user-facing file storage
@@ -16,14 +16,14 @@ Where to see it:
 
 - [../excerpts/01-r2-storage-structure.ts](../excerpts/01-r2-storage-structure.ts)
 
-Response:
+Where the system landed:
 
 - move canonical capsule file storage to safer per-capsule paths
 - keep backward compatibility for old locations while migrating away
 
 ## 2. Free-To-Paid Storage Is Not A One-Bucket Story
 
-What went wrong:
+What changed:
 
 - users can have objects in both shared and dedicated lanes after upgrades or partial migration
 - a naive "read from the current bucket only" model produces incomplete listings and surprising misses
@@ -33,7 +33,7 @@ Where to see it:
 - [../excerpts/02-r2-buckets-fallback.ts](../excerpts/02-r2-buckets-fallback.ts)
 - [../excerpts/09-r2-buckets.test.ts](../excerpts/09-r2-buckets.test.ts)
 
-Response:
+Where the system landed:
 
 - add a fallback bucket wrapper
 - merge listings across lanes
@@ -42,7 +42,7 @@ Response:
 
 ## 3. Deduplication Needed A Stronger Physical/Logical Split
 
-What went wrong:
+What changed:
 
 - remixes can explode physical storage if every file is copied every time
 - but per-user private buckets are the wrong home for globally deduplicated blobs
@@ -51,7 +51,7 @@ Where to see it:
 
 - [../excerpts/03-blob-store.ts](../excerpts/03-blob-store.ts)
 
-Response:
+Where the system landed:
 
 - keep deduplicated blobs in the shared lane
 - use D1 mappings and ref counts for logical ownership
@@ -59,7 +59,7 @@ Response:
 
 ## 4. Bucket Contents Alone Were Not Enough
 
-What went wrong:
+What changed:
 
 - raw object storage cannot answer the platform's product questions by itself
 
@@ -68,7 +68,7 @@ Where to see it:
 - [../excerpts/04-r2-object-index.ts](../excerpts/04-r2-object-index.ts)
 - [../excerpts/08-storage-schema.ts](../excerpts/08-storage-schema.ts)
 
-Response:
+Where the system landed:
 
 - make `r2_objects` and related tables first-class
 - use category to drive quota and visibility semantics
@@ -76,7 +76,7 @@ Response:
 
 ## 5. Public Runtime Delivery Needed Its Own Lane
 
-What went wrong:
+What changed:
 
 - fast public runtime delivery is attractive
 - but canonical artifact storage still contains objects that should not be treated as public by default
@@ -86,7 +86,7 @@ Where to see it:
 - [../excerpts/05-public-artifact-mirror.ts](../excerpts/05-public-artifact-mirror.ts)
 - [../excerpts/10-public-artifact-mirror.test.ts](../excerpts/10-public-artifact-mirror.test.ts)
 
-Response:
+Where the system landed:
 
 - use a dedicated public artifact mirror bucket
 - gate mirroring with access policy
@@ -95,7 +95,7 @@ Response:
 
 ## 6. Canonical Blob Storage Could Not Be A Flag Day
 
-What went wrong:
+What changed:
 
 - canonical blob storage is better, but old capsule reads still have to work during migration
 
@@ -103,7 +103,7 @@ Where to see it:
 
 - [../excerpts/07-capsule-gateway-canonicalization.ts](../excerpts/07-capsule-gateway-canonicalization.ts)
 
-Response:
+Where the system landed:
 
 - keep legacy-compatible reads
 - canonicalize lazily for mutation paths
@@ -111,7 +111,7 @@ Response:
 
 ## 7. Serving User Files Is A Security Problem
 
-What went wrong:
+What changed:
 
 - dangerous user-controlled file types are easy to mishandle if every route improvises response headers
 
@@ -119,19 +119,19 @@ Where to see it:
 
 - [../excerpts/06-file-serving-security.ts](../excerpts/06-file-serving-security.ts)
 
-Response:
+Where the system landed:
 
 - centralize file serving policy
 - apply CSP for scriptable types
 - always send `nosniff`
 - make the secure path the SSOT
 
-## Why This Helps Trust
+## Why This Section Exists
 
-This repo is stronger when it shows the real pressure behind the architecture.
+The storage system makes more sense when you can see the pressure behind it.
 
-Users do not need us to claim perfection. They need to see:
+The goal here is simple:
 
-- that the system has encountered hard edges
-- that the responses are concrete
-- that those responses live in real source, real schema, and real tests
+- show where the current shape came from
+- point to the source that reflects it
+- make the docs easier to connect back to the code

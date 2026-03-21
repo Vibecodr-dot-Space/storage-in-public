@@ -2,7 +2,7 @@
 
 This is the high-level shape of the production storage subsystem behind Vibecodr.
 
-If you want the proof, do not stop here. Cross-check this document with the files under [../excerpts](../excerpts/README.md).
+For concrete source-backed examples, cross-check this document with the files under [../excerpts](../excerpts/README.md).
 
 ## The Core Claim
 
@@ -17,7 +17,7 @@ The storage system is a platform subsystem with at least six coupled concerns:
 - public artifact mirroring
 - cleanup and reconciliation
 
-That is why the private source modules are large. The complexity is not decorative.
+That is why the private source modules are large. The complexity is structural, not decorative.
 
 ## The Shape
 
@@ -36,7 +36,7 @@ flowchart LR
   H --> G
 ```
 
-## The Buckets Are Not The Product Boundary
+## The Buckets Are Not The Whole Story
 
 The important system boundary is the Worker plus the D1 control plane.
 
@@ -62,8 +62,6 @@ The system intentionally uses multiple storage lanes:
 - dedicated per-user private buckets for paid storage
 - a public assets bucket
 - a separate public artifact mirror bucket
-
-This is not over-design for its own sake.
 
 It exists because different object classes need different delivery and lifecycle behavior:
 
