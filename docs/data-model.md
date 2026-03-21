@@ -2,6 +2,11 @@
 
 These are the storage-specific tables that matter most to understanding the system.
 
+For the source-backed version, see:
+
+- [../excerpts/08-storage-schema.ts](../excerpts/08-storage-schema.ts)
+- [../reference/schema.sql](../reference/schema.sql)
+
 ## Core Tables
 
 ### `r2_objects`

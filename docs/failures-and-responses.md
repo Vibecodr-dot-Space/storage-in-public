@@ -1,104 +1,137 @@
 # Failures And Responses
 
-This is the part we think makes the architecture more credible, not less credible.
+This document exists because "trust us, we thought about it" is weaker than "here is what went wrong and where the response lives."
 
-The storage design did not appear fully-formed. Some of the current shape is a direct response to earlier failure modes.
+Every section below points to an excerpt file in this repo.
 
 ## 1. Capsule File Keys Were Too Broad
 
-Earlier pressure:
+What went wrong:
 
-- content-addressable keying for capsule file storage looked elegant,
-- but it created collision/data-loss risk when identical content appeared in the wrong ownership context.
+- content-addressed capsule keys looked elegant
+- they were too broad for user-facing file storage
+- collisions in the wrong ownership context created real overwrite risk
 
-Design response:
+Where to see it:
 
-- move canonical capsule file storage to safer per-capsule paths,
-- isolate deduplication into a dedicated blob-store model instead of making every user-facing file path content-addressed.
+- [../excerpts/01-r2-storage-structure.ts](../excerpts/01-r2-storage-structure.ts)
 
-What this teaches:
+Response:
 
-- content addressing is powerful,
-- but not every storage surface should be content-addressed just because deduplication is attractive.
+- move canonical capsule file storage to safer per-capsule paths
+- keep backward compatibility for old locations while migrating away
 
-## 2. Public Runtime Delivery Could Not Share A Mixed Bucket
+## 2. Free-To-Paid Storage Is Not A One-Bucket Story
 
-Earlier pressure:
+What went wrong:
 
-- public runtime bundles should load fast from the edge,
-- but the canonical artifact store also held private or owner-only material.
+- users can have objects in both shared and dedicated lanes after upgrades or partial migration
+- a naive "read from the current bucket only" model produces incomplete listings and surprising misses
 
-Design response:
+Where to see it:
 
-- create a dedicated public artifact mirror bucket,
-- mirror only artifacts that the access policy says are publicly cacheable,
-- keep revocation and purge behavior tied to that public lane.
+- [../excerpts/02-r2-buckets-fallback.ts](../excerpts/02-r2-buckets-fallback.ts)
+- [../excerpts/09-r2-buckets.test.ts](../excerpts/09-r2-buckets.test.ts)
 
-What this teaches:
+Response:
 
-- "fast public delivery" and "canonical private storage" should often be different lanes.
+- add a fallback bucket wrapper
+- merge listings across lanes
+- prefer primary bucket objects on key collision
+- test the weird cases directly
 
-## 3. Bucket Contents Alone Were Not Enough
+## 3. Deduplication Needed A Stronger Physical/Logical Split
 
-Earlier pressure:
+What went wrong:
 
-- it is tempting to treat bucket state as storage truth,
-- but product questions need more than raw object existence.
+- remixes can explode physical storage if every file is copied every time
+- but per-user private buckets are the wrong home for globally deduplicated blobs
 
-Design response:
+Where to see it:
 
-- make `r2_objects` first-class,
-- use D1 for ownership, visibility, category, quota math, lookup resolution, and cleanup decisions,
-- add reconciliation because D1 and R2 can drift.
+- [../excerpts/03-blob-store.ts](../excerpts/03-blob-store.ts)
 
-What this teaches:
+Response:
 
-- object storage is rarely the whole storage system in a real product.
+- keep deduplicated blobs in the shared lane
+- use D1 mappings and ref counts for logical ownership
+- let users pay for logical usage while the platform keeps physical dedup savings
 
-## 4. Deduplication Needed Logical Accounting
+## 4. Bucket Contents Alone Were Not Enough
 
-Earlier pressure:
+What went wrong:
 
-- shared blobs and mirrored dependencies save large amounts of physical storage,
-- but the product still needs user-level accounting and cleanup behavior.
+- raw object storage cannot answer the platform's product questions by itself
 
-Design response:
+Where to see it:
 
-- separate physical bytes from logical billing/accounting,
-- keep global deduplicated objects with explicit ref counts,
-- track per-artifact or per-capsule logical ownership in D1.
+- [../excerpts/04-r2-object-index.ts](../excerpts/04-r2-object-index.ts)
+- [../excerpts/08-storage-schema.ts](../excerpts/08-storage-schema.ts)
 
-What this teaches:
+Response:
 
-- "who pays" and "where the byte lives" are different architecture questions.
+- make `r2_objects` and related tables first-class
+- use category to drive quota and visibility semantics
+- use D1 as the control plane instead of pretending the bucket is the only source of truth
 
-## 5. Cleanup Needed To Be A First-Class System
+## 5. Public Runtime Delivery Needed Its Own Lane
 
-Earlier pressure:
+What went wrong:
 
-- categories age differently,
-- queue failures happen,
-- migrations leave compatibility rows behind,
-- indexes and buckets can drift over time.
+- fast public runtime delivery is attractive
+- but canonical artifact storage still contains objects that should not be treated as public by default
 
-Design response:
+Where to see it:
 
-- lifecycle cleanup jobs,
-- downgrade grace handling,
-- reconciliation jobs for phantom/ghost objects,
-- queue consumers that clean both bytes and index state.
+- [../excerpts/05-public-artifact-mirror.ts](../excerpts/05-public-artifact-mirror.ts)
+- [../excerpts/10-public-artifact-mirror.test.ts](../excerpts/10-public-artifact-mirror.test.ts)
 
-What this teaches:
+Response:
 
-- if cleanup is not designed, it becomes a source of hidden product bugs and hidden cost.
+- use a dedicated public artifact mirror bucket
+- gate mirroring with access policy
+- lease the mirror operation in D1
+- write a sentinel manifest copy last so "mirror complete" is observable
 
-## Why We Publish This
+## 6. Canonical Blob Storage Could Not Be A Flag Day
 
-A polished architecture diagram without the failure history is easy to distrust.
+What went wrong:
 
-A useful public architecture repo should explain:
+- canonical blob storage is better, but old capsule reads still have to work during migration
 
-- what went wrong,
-- what changed,
-- what tradeoff remains,
-- why the present design is not arbitrary.
+Where to see it:
+
+- [../excerpts/07-capsule-gateway-canonicalization.ts](../excerpts/07-capsule-gateway-canonicalization.ts)
+
+Response:
+
+- keep legacy-compatible reads
+- canonicalize lazily for mutation paths
+- verify coverage before flipping storage mode
+
+## 7. Serving User Files Is A Security Problem
+
+What went wrong:
+
+- dangerous user-controlled file types are easy to mishandle if every route improvises response headers
+
+Where to see it:
+
+- [../excerpts/06-file-serving-security.ts](../excerpts/06-file-serving-security.ts)
+
+Response:
+
+- centralize file serving policy
+- apply CSP for scriptable types
+- always send `nosniff`
+- make the secure path the SSOT
+
+## Why This Helps Trust
+
+This repo is stronger when it shows the real pressure behind the architecture.
+
+Users do not need us to claim perfection. They need to see:
+
+- that the system has encountered hard edges
+- that the responses are concrete
+- that those responses live in real source, real schema, and real tests

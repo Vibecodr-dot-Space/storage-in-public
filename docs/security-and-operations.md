@@ -2,6 +2,14 @@
 
 This document covers the parts of the storage architecture that are easy to underestimate.
 
+For the evidence layer behind these claims, see:
+
+- [../excerpts/05-public-artifact-mirror.ts](../excerpts/05-public-artifact-mirror.ts)
+- [../excerpts/06-file-serving-security.ts](../excerpts/06-file-serving-security.ts)
+- [../excerpts/08-storage-schema.ts](../excerpts/08-storage-schema.ts)
+- [../excerpts/09-r2-buckets.test.ts](../excerpts/09-r2-buckets.test.ts)
+- [../excerpts/10-public-artifact-mirror.test.ts](../excerpts/10-public-artifact-mirror.test.ts)
+
 ## Security Model
 
 ### Private Reads Stay Behind Workers

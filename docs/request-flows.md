@@ -2,6 +2,8 @@
 
 This document shows the main storage flows at a system level.
 
+These flows are backed by the excerpt files under [../excerpts](../excerpts/README.md), not just by prose.
+
 ## 1. User Asset Upload
 
 Used for public CDN assets and private/reference assets in paid storage surfaces.
@@ -29,6 +31,10 @@ Pressure that shaped this flow:
 - Quota is checked before write, but accounting still depends on the D1 upsert succeeding.
 - Public CDN delivery is opt-in by category/lane, not a property of "uploaded to R2".
 
+Relevant evidence:
+
+- [../excerpts/04-r2-object-index.ts](../excerpts/04-r2-object-index.ts)
+
 ## 2. Draft Compile / Publish
 
 The compile/publish path writes runtime artifacts and then indexes them.
@@ -47,6 +53,11 @@ Why it matters:
 
 - the artifact write path is where logical storage accounting becomes durable,
 - this is also where the public mirror lane can later be derived safely.
+
+Relevant evidence:
+
+- [../excerpts/04-r2-object-index.ts](../excerpts/04-r2-object-index.ts)
+- [../excerpts/05-public-artifact-mirror.ts](../excerpts/05-public-artifact-mirror.ts)
 
 ## 3. Public Artifact Mirror
 
@@ -96,6 +107,10 @@ Why this flow exists:
 - it avoids bearer-style presigned URL sprawl for private objects,
 - it lets the platform control CSP, `nosniff`, and visibility semantics.
 
+Relevant evidence:
+
+- [../excerpts/06-file-serving-security.ts](../excerpts/06-file-serving-security.ts)
+
 ## 5. Capsule Blob Reads
 
 Canonical capsule reads prefer blob-backed mappings:
@@ -105,6 +120,10 @@ Canonical capsule reads prefer blob-backed mappings:
 3. Fallback to legacy-compatible capsule storage only when needed.
 
 This compatibility layer exists because the system migrated toward blob-backed canonical storage rather than replacing every old capsule in one shot.
+
+Relevant evidence:
+
+- [../excerpts/07-capsule-gateway-canonicalization.ts](../excerpts/07-capsule-gateway-canonicalization.ts)
 
 ## 6. Cleanup And Reconciliation
 
@@ -120,3 +139,8 @@ Examples:
 - keep artifacts intentionally permanent unless policy says otherwise,
 - detect "phantom" D1 rows that no longer have backing R2 objects,
 - report "ghost" R2 objects that are not indexed.
+
+Relevant evidence:
+
+- [../excerpts/01-r2-storage-structure.ts](../excerpts/01-r2-storage-structure.ts)
+- [../excerpts/08-storage-schema.ts](../excerpts/08-storage-schema.ts)

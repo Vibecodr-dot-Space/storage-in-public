@@ -1,100 +1,103 @@
 # storage-in-public
 
-Public documentation and reference artifacts for the Vibecodr storage architecture.
+This repo exists because we do not want Vibecodr's storage architecture to be smoke and mirrors.
 
-This repo is intentionally not a drop-in storage product. It is a transparent, architecture-first release of how Vibecodr uses Cloudflare R2, D1, and Workers to manage user files, compiled artifacts, public media, deduplicated blobs, and cleanup/reconciliation.
+It is not a generic storage framework. It is a transparency repo built from the real production storage system behind Vibecodr: the bucket topology, the D1 control plane, the public artifact mirror lane, the blob store, the secure serving layer, the migration compatibility paths, and the repair jobs that keep the whole thing from drifting apart.
 
-## What This Repo Is
+If you are trying to answer "did these people actually build a serious platform?" this repo is meant to help with that.
 
-- A public explanation of the real storage shape behind Vibecodr.
-- A set of design docs that describe the control plane, data plane, and serving model.
-- A small `reference/` folder with sanitized schemas and constants that make the docs concrete.
+## What This Repo Contains
 
-## What This Repo Is Not
+- blunt docs about how the storage system is shaped and why it is shaped that way
+- curated source excerpts from the real production repo
+- selected test excerpts that show we actually pinned tricky behavior
+- simplified reference artifacts for schema and keyspace orientation
 
-- Not a turnkey replacement for the full Vibecodr storage stack.
-- Not a promise that every helper here can be copied into another app unchanged.
-- Not the entire production codebase dumped into public view.
+## What This Repo Does Not Pretend To Be
 
-The real system is tightly coupled to platform-specific concerns:
+- not a drop-in package
+- not a sanitized demo app
+- not a claim that the code is tiny, elegant, or easy to transplant
 
-- auth and origin checks,
-- paid-feature entitlements,
-- artifact access policy,
-- capsule lifecycle state,
-- moderation/public-visibility rules,
-- background repair and reconciliation jobs.
+The actual subsystem is large and cross-coupled because it sits at the center of:
 
-Publishing the raw subtree would show too much product-specific coupling and too much migration history. Publishing the architecture and the core patterns shows the real ideas without pretending they are a generic package.
+- user uploads
+- runtime artifacts
+- public media delivery
+- quota accounting
+- access control
+- secure file serving
+- migration compatibility
+- cleanup and reconciliation
 
-## Architecture At A Glance
+We think it builds more trust to say that directly than to pretend this is a neat little library.
 
-- R2 holds bytes. D1 is the control plane.
-- `r2_objects` is the main index for object ownership, visibility, quota accounting, download resolution, and cleanup.
-- Free-tier write paths use a shared bucket. Paid users can get dedicated buckets.
-- Deduplicated capsule blobs intentionally live in the shared bucket, even for paid users, so cross-user deduplication works and remixes do not depend on another user's bucket surviving.
-- Public media and public runtime artifacts use separate public-serving lanes from private objects.
-- Private reads are mediated by Workers, not handed out as direct bucket URLs.
-- Scheduled maintenance jobs reconcile D1 and R2 so the index does not silently drift away from the bytes.
+## Start Here
 
-## Credibility Notes
+- [docs/architecture.md](./docs/architecture.md)
+- [docs/failures-and-responses.md](./docs/failures-and-responses.md)
+- [docs/source-map.md](./docs/source-map.md)
+- [excerpts/README.md](./excerpts/README.md)
 
-This repo keeps some of the scar tissue on purpose.
+## What The Real Source Looks Like
 
-A lot of the architecture only makes sense once you understand the failure modes it grew out of:
+At extraction time, some of the core source files in the private repo were approximately:
 
-- content-addressed capsule file keys caused collisions, so capsule storage moved to safer keys while deduplication was isolated into a blob-store path,
-- a mixed public/private artifact lane was too broad, so public runtime delivery moved to a dedicated mirror bucket,
-- quota/accounting could not depend on "R2 is the truth", so D1 indexing became first-class,
-- cleanup could not be an afterthought, so lifecycle and reconciliation jobs became part of the design.
+| Source file | Approx. lines | Why it matters |
+| --- | ---: | --- |
+| `workers/api/src/services/storage/capsuleStorage.ts` | 2700 | publish-time storage, artifact creation, dependency accounting, cleanup hooks |
+| `workers/api/src/storage/r2.ts` | 2159 | key structure, file classification, integrity utilities, storage helpers |
+| `workers/api/src/handlers/artifacts.ts` | 1860 | runtime artifact serving, manifest loading, mirror integration |
+| `workers/api/src/storage/r2ObjectIndex.ts` | 1506 | ownership index, quota categories, visibility, bucket resolution |
+| `workers/api/src/services/storage/storageBrowserService.ts` | 1178 | storage browser and user-facing object/capsule views |
 
-That kind of annotation increases trust when it is curated. The docs in this repo keep that format intentionally.
+That size is not something we are proud of aesthetically, but it is evidence that the system is carrying real platform concerns and not just a toy upload flow.
 
-## Read First
+## What We Think Actually Builds Trust
 
-- [Architecture](./docs/architecture.md)
-- [Request Flows](./docs/request-flows.md)
-- [Data Model](./docs/data-model.md)
-- [Failures And Responses](./docs/failures-and-responses.md)
-- [Security And Operations](./docs/security-and-operations.md)
-- [Source Map](./docs/source-map.md)
+Not polished prose by itself. Evidence.
 
-## Bucket Topology
+This repo includes evidence of:
 
-| Bucket lane | Role | Public? | Notes |
-| --- | --- | --- | --- |
-| Shared bucket | free-tier objects, shared blob store, fallback reads | no | canonical shared storage lane |
-| Dedicated user buckets | paid-user private storage | no | created and managed per paid user |
-| Public assets bucket | avatars, thumbnails, selected public user assets | yes | served through a custom domain |
-| Public artifacts mirror bucket | publicly cacheable runtime bundles + manifest copies | yes | separate from canonical/private artifact storage |
+- key migrations that happened because earlier assumptions were wrong
+- cross-bucket fallback behavior for free-to-paid storage transitions
+- deduplicated blob storage with shared physical bytes and logical accounting
+- a dedicated public artifact mirror lane instead of a hand-wavy "CDN bucket"
+- secure serving for scriptable user files
+- tests for tricky storage behavior that would otherwise regress quietly
 
-## Why Private Reads Stay Worker-Mediated
+## Recommended Reading Order
 
-As of 2026-03-21, Cloudflare's R2 docs still describe presigned URLs as bearer tokens, and they do not work on custom domains. Vibecodr's design therefore keeps private downloads behind the API worker and uses public custom-domain buckets only for content that is actually meant to be public.
+1. [docs/architecture.md](./docs/architecture.md)
+2. [excerpts/01-r2-storage-structure.ts](./excerpts/01-r2-storage-structure.ts)
+3. [excerpts/02-r2-buckets-fallback.ts](./excerpts/02-r2-buckets-fallback.ts)
+4. [excerpts/03-blob-store.ts](./excerpts/03-blob-store.ts)
+5. [excerpts/05-public-artifact-mirror.ts](./excerpts/05-public-artifact-mirror.ts)
+6. [excerpts/06-file-serving-security.ts](./excerpts/06-file-serving-security.ts)
+7. [docs/failures-and-responses.md](./docs/failures-and-responses.md)
 
-That choice also keeps response headers, CSP, ownership checks, origin checks, entitlement checks, and visibility revocation in one place.
+## Cloudflare Context
 
-Relevant Cloudflare docs:
+As of 2026-03-21, Cloudflare's R2 docs still matter to how this system is designed:
 
 - [R2 presigned URLs](https://developers.cloudflare.com/r2/api/s3/presigned-urls/)
 - [R2 public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/)
 - [R2 bindings in Workers](https://developers.cloudflare.com/workers/runtime-apis/bindings/r2/)
 - [Storing user generated content](https://developers.cloudflare.com/reference-architecture/diagrams/storage/storing-user-generated-content/)
 
-## Repository Layout
+Those constraints are one reason private reads stay Worker-mediated while truly public assets get their own custom-domain lanes.
+
+## Repo Layout
 
 ```text
 docs/
-  architecture.md
-  data-model.md
-  failures-and-responses.md
-  request-flows.md
-  security-and-operations.md
-  source-map.md
+excerpts/
 reference/
-  keyspaces.ts
-  schema.sql
 ```
+
+- `docs/` explains the system in plain language
+- `excerpts/` shows selected real source and test fragments
+- `reference/` contains lighter-weight orientation artifacts
 
 ## License
 
