@@ -58,9 +58,9 @@ The actual subsystem is large and cross-coupled because it sits at the center of
 - [docs/failures-and-responses.md](./docs/failures-and-responses.md)
 - [docs/source-map.md](./docs/source-map.md)
 
-## A Note On Scale
+## A Note On Scope
 
-Some of the production source files behind this repo are large. That is not the point of the repo, but it does explain why the public version is organized as a guided tour instead of a raw dump.
+The production storage code touches a lot of neighboring concerns, so this public repo is organized as a guided tour instead of a raw dump.
 
 If you want the provenance and file map, see [docs/source-map.md](./docs/source-map.md).
 

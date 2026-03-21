@@ -77,12 +77,11 @@ Reasons:
 
 ## Summary
 
-The private source looks like a real long-lived platform subsystem:
+The private source looks like a long-lived platform subsystem:
 
-- large modules
 - explicit repair paths
 - migration compatibility
 - careful serving code
 - tests around uncomfortable behavior
 
-This public repo should be read as a guided window into that system, not as a claim that the original codebase is small or tidy.
+This public repo should be read as a guided window into that system.
