@@ -18,7 +18,8 @@ Start with:
 1. [docs/current-contract.md](./docs/current-contract.md)
 2. [docs/quick-tour.md](./docs/quick-tour.md)
 3. [docs/architecture.md](./docs/architecture.md)
-4. [excerpts/README.md](./excerpts/README.md)
+4. [docs/data-model.md](./docs/data-model.md)
+5. [excerpts/README.md](./excerpts/README.md)
 
 ## What Is In Here
 
@@ -47,27 +48,24 @@ The actual subsystem is large and cross-coupled because it sits at the center of
 
 - [docs/architecture.md](./docs/architecture.md)
 - [docs/quick-tour.md](./docs/quick-tour.md)
-- [docs/source-map.md](./docs/source-map.md)
+- [docs/failures-and-responses.md](./docs/failures-and-responses.md)
+- [docs/data-model.md](./docs/data-model.md)
 
 ### If you want the gritty source-backed bits
 
 - [excerpts/11-source-access.ts](./excerpts/11-source-access.ts)
 - [excerpts/12-authored-layout.ts](./excerpts/12-authored-layout.ts)
 - [excerpts/05-public-artifact-mirror.ts](./excerpts/05-public-artifact-mirror.ts)
-- [excerpts/08-storage-schema.ts](./excerpts/08-storage-schema.ts)
 - [excerpts/09-r2-buckets.test.ts](./excerpts/09-r2-buckets.test.ts)
 - [excerpts/10-public-artifact-mirror.test.ts](./excerpts/10-public-artifact-mirror.test.ts)
 
 ### If you want the "how did it end up like this?" layer
 
 - [docs/failures-and-responses.md](./docs/failures-and-responses.md)
-- [docs/source-map.md](./docs/source-map.md)
 
 ## A Note On Scope
 
 The production storage code touches a lot of neighboring concerns, so this public repo is organized as a guided tour instead of a raw dump.
-
-If you want the provenance and file map, see [docs/source-map.md](./docs/source-map.md).
 
 ## Cloudflare Context
 

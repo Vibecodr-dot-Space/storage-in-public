@@ -1,153 +1,52 @@
 # Data Model
 
-These are the storage-specific tables that matter most to understanding the current system.
+These are the storage control-plane concepts that matter most to understanding the current system.
 
-For the source-backed version, see:
+## Current Control Surfaces
 
-- [../excerpts/08-storage-schema.ts](../excerpts/08-storage-schema.ts)
-- [../reference/schema.sql](../reference/schema.sql)
+### Capsule storage state
 
-## Current Control Tables
+The capsule record is still the parent record, but storage mode is now explicit instead of being inferred from where bytes happen to live.
 
-### `capsules`
+### Authored layout state
 
-The capsule row is still the parent record, but it is no longer asked to carry every storage decision by itself.
+The backend owns whether a capsule is still in the legacy-preserve layout or has moved to the standardized authored layout.
 
-### `capsule_storage_modes`
+### Object index
 
-Tracks whether a capsule is still in `legacy_compat` or has moved to `canonical_blob`.
+The object index tracks the metadata needed for lookup, visibility, ownership, cleanup, and share-token handling.
 
-This is the current way the system remembers whether read paths should prefer the compatibility lane or the canonical blob lane.
+### Blob store
 
-### `capsule_authored_layout_modes`
+The blob store is content-addressable storage for deduplicated capsule files.
 
-Tracks whether a capsule is still in `legacy_preserve_v1` or has moved to `standardized_authored_v1`.
+### Capsule-file links
 
-This table is the backend-owned record of authored-path identity.
+Capsule files resolve to blob digests, which makes the capsule file system a real logical layer instead of a blob cache.
 
-### `r2_objects`
+### Dependency store
 
-The main index for object ownership and storage policy.
+Mirrored runtime dependencies are stored as content-addressed objects so they can be shared physically while still being referenced consistently.
 
-Important columns:
+### Dependency aliases
 
-- `bucket_name`
-- `r2_key`
-- `object_id`
-- `owner_id`
-- `category`
-- `size_bytes`
-- `content_type`
-- `visibility`
-- optional share-token hash/ciphertext metadata
+An alias layer lets one dependency digest appear under multiple public keys while still resolving back to a single digest.
 
-Representative uses:
+### Artifact dependency links
 
-- look up by object id for downloads
-- list storage objects for a user
-- account for quota categories
-- classify object visibility
-- remove rows during cleanup
-- reconcile D1 and R2
+Artifact-level dependency links keep logical references to shared dependency objects explicit without duplicating the physical bytes.
 
-### `blobs`
+### Public mirror lease state
 
-Content-addressable store for deduplicated capsule files.
+A lease record prevents multiple requests from racing the same mirror job.
 
-Important columns:
+### Legacy promotion queue
 
-- `sha256`
-- `size_bytes`
-- `content_type`
-- `bucket_name`
-- `r2_key`
-- `ref_count`
-- `ref_version`
+A queue and dedupe layer handles old public launches that need promotion onto the current runtime delivery path.
 
-### `capsule_blobs`
+### Capsule backend links
 
-Maps a capsule file path to a blob hash.
-
-Important columns:
-
-- `capsule_id`
-- `file_path`
-- `blob_sha256`
-
-This is what turns the blob store into a real capsule file system rather than just a blob cache.
-
-### `dependency_objects`
-
-Content-addressed metadata for mirrored runtime dependencies.
-
-Important columns:
-
-- `sha256`
-- `size_bytes`
-- `content_type`
-- `canonical_r2_key`
-- `ref_count`
-- `ref_version`
-
-### `dependency_object_aliases`
-
-Allows one dependency object to have multiple R2 keys or aliases while still pointing back to one digest.
-
-Important columns:
-
-- `r2_key`
-- `dependency_sha256`
-- `content_type`
-
-### `artifact_dependency_refs`
-
-Tracks logical ownership of dependency objects by a specific artifact.
-
-Important columns:
-
-- `artifact_id`
-- `dependency_sha256`
-- `source_ref`
-- `relation_kind`
-
-This is what lets the platform charge logical bytes per artifact even if the physical dependency object is globally shared.
-
-### `public_artifact_mirror_leases`
-
-Simple lease table to stop multiple requests from racing the same mirror job.
-
-Important columns:
-
-- `artifact_id`
-- `lease_expires_at`
-- `updated_at`
-
-### `legacy_artifact_promotions`
-
-Queue and dedupe state for legacy public launches that should be promoted onto the current runtime delivery path.
-
-Important columns:
-
-- `legacy_artifact_id`
-- `capsule_id`
-- `status`
-- `new_artifact_id`
-- `attempt_count`
-- `last_requested_at`
-- `last_attempt_at`
-- `completed_at`
-- `last_surface`
-- `last_error_code`
-- `last_error_message`
-
-### `capsule_backends`
-
-Links a capsule to its backend pulse when a project publishes server-side code.
-
-Important columns:
-
-- `capsule_id`
-- `pulse_id`
+Capsule-backend links tie a capsule to the backend pulse that serves server-side code.
 
 ## Categories And Visibility
 
@@ -168,7 +67,7 @@ The category does real work:
 - it determines whether bytes count toward user quota
 - it helps lifecycle jobs decide how to clean up a prefix
 
-Representative visibility modes:
+Representative visibility modes include:
 
 - `private`
 - `public`
@@ -178,7 +77,7 @@ Representative visibility modes:
 
 The design assumption is:
 
-> bucket contents are not enough to answer product questions.
+> bucket contents are not enough to answer storage-system questions.
 
 You cannot reliably derive these things from R2 alone:
 
@@ -189,13 +88,6 @@ You cannot reliably derive these things from R2 alone:
 - whether deleting it should decrement logical usage
 - whether a public artifact mirror should exist
 - whether a capsule is still on a legacy storage or authored-layout mode
-- whether a legacy public artifact needs promotion
+- whether a legacy public launch needs promotion
 
-That is why the D1 layer is not optional architecture glue. It is the authoritative control plane.
-
-## Reference Files
-
-For a concrete, simplified version of the schema, see:
-
-- [reference/schema.sql](../reference/schema.sql)
-- [reference/keyspaces.ts](../reference/keyspaces.ts)
+That is why the D1 control plane is not optional architecture glue. It is the authoritative state layer.

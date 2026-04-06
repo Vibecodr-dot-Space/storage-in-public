@@ -109,7 +109,7 @@ Examples:
 
 ## Failure Escalation Steps
 
-1. Confirm the route path maps to the expected owner in `docs/WORKER-LANDSCAPE.md` and `docs/SYSTEM-MAP.md`.
+1. Confirm the route path maps to the expected owner in `docs/WORKER-LANDSCAPE.md`, `docs/architecture.md`, and `docs/current-contract.md`.
 2. Check contract mismatch:
    - Did route parameters or payload shape change?
 3. Check rate-limit and quota path:
@@ -119,7 +119,7 @@ Examples:
    - API logs
    - mirror and promotion telemetry
 5. If the data layer is suspect:
-   - verify table ownership in `docs/DOMAIN-REFERENCE.md`
+   - verify the owning subsystem in code and migrations
    - ensure the migration path in `workers/api/drizzle/migrations/*` aligns
 6. For storage issues:
    - verify source-access intent and authored-layout mode first

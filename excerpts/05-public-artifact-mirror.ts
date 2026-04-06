@@ -148,12 +148,7 @@ async function tryClaimPublicArtifactMirrorLease(
   const leaseUntil = now + MIRROR_LEASE_TTL_SECONDS;
   try {
     const result = await env.DB.prepare(
-      `INSERT INTO public_artifact_mirror_leases (artifact_id, lease_expires_at, updated_at)
-       VALUES (?, ?, ?)
-       ON CONFLICT(artifact_id) DO UPDATE SET
-         lease_expires_at = excluded.lease_expires_at,
-         updated_at = excluded.updated_at
-       WHERE public_artifact_mirror_leases.lease_expires_at <= excluded.updated_at`
+      `/* claim public artifact mirror lease when the current lease is expired */`
     )
       .bind(artifactId, leaseUntil, now)
       .run();
@@ -173,7 +168,7 @@ async function releasePublicArtifactMirrorLease(env: Env, artifactId: string): P
   }
 
   try {
-    await env.DB.prepare("DELETE FROM public_artifact_mirror_leases WHERE artifact_id = ?")
+    await env.DB.prepare("/* release public artifact mirror lease */")
       .bind(artifactId)
       .run();
   } catch (error) {

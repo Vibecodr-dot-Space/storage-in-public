@@ -52,8 +52,8 @@ Where to see it:
 Where the system landed:
 
 - keep deduplicated blobs in the shared lane
-- use D1 mappings and ref counts for logical ownership
-- let users pay for logical usage while the platform keeps dedup savings as cost reduction
+- use D1 mappings and ref counts to keep logical attribution coherent
+- let the system reuse shared bytes while keeping per-user and per-artifact accounting separate
 
 ## 4. Public Runtime Delivery Needed Its Own Lane
 

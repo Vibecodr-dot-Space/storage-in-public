@@ -96,7 +96,7 @@ Relevant evidence:
 
 ## D1 Is The Storage Control Plane
 
-The D1 tables are where the platform answers product questions:
+The D1 control plane is where the platform answers storage questions:
 
 - who owns this object
 - what category is it
@@ -109,7 +109,7 @@ The D1 tables are where the platform answers product questions:
 
 Relevant evidence:
 
-- [../excerpts/08-storage-schema.ts](../excerpts/08-storage-schema.ts)
+- [./data-model.md](./data-model.md)
 - [../docs/current-contract.md](./current-contract.md)
 
 ## The System Carries Migration History

@@ -13,7 +13,7 @@ What changed in the 0A / 0A.2 contract work is that the owners are now explicit:
 - `sourceAccess` owns what a viewer, studio, clone, export, compile, deploy, or operator can see.
 - `capsuleFiles` plus `authoredLayout` own authored-path identity and write normalization.
 - `publicArtifactMirror` plus `publishedArtifactCacheWarm` own public runtime delivery and warmup.
-- `legacy_artifact_promotions` owns self-healing for legacy public launches.
+- the legacy promotion queue owns self-healing for legacy public launches.
 
 See:
 
@@ -38,9 +38,9 @@ See:
 - [../excerpts/02-r2-buckets-fallback.ts](../excerpts/02-r2-buckets-fallback.ts)
 - [../excerpts/05-public-artifact-mirror.ts](../excerpts/05-public-artifact-mirror.ts)
 
-## 3. Deduplication Is Physical, Accounting Is Logical
+## 3. Deduplication Is Physical, Attribution Is Logical
 
-Capsule blobs and mirrored dependencies can be physically shared while still being logically charged and tracked per user or per artifact.
+Capsule blobs and mirrored dependencies can be physically shared while still being tracked with separate logical references per user or per artifact.
 
 See:
 

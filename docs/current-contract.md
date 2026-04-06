@@ -11,7 +11,7 @@ The live storage contract now has four owners that matter as much as the buckets
 - `workers/api/src/ssot/sourceAccess.ts` owns read, list, entry, and snapshot shaping for viewer, studio, clone, export, compile, deploy, and operator intents.
 - `workers/api/src/storage/capsuleFiles.ts` and `workers/api/src/domain/studio/authoredLayout.ts` own backend-authored path identity and the legacy-versus-standardized authored layout split.
 - `workers/api/src/runtime/publicArtifactMirror.ts` and `workers/api/src/runtime/publishedArtifactCacheWarm.ts` own public runtime delivery, mirror readiness, and startup warming.
-- `legacy_artifact_promotions` owns self-healing for old public launches that are cacheable but cannot be mirrored directly.
+- the legacy promotion queue owns self-healing for old public launches that are cacheable but cannot be mirrored directly.
 
 Buckets still store bytes, but they are no longer the whole answer.
 
@@ -27,7 +27,7 @@ flowchart LR
   Capsules --> Artifacts["runtime artifacts"]
   Artifacts --> Mirror["publicArtifactMirror"]
   Artifacts --> Warm["publishedArtifactCacheWarm"]
-  LegacyOpen["legacy public open"] --> Promo["legacy_artifact_promotions"]
+  LegacyOpen["legacy public open"] --> Promo["legacy promotion queue"]
   Promo --> Artifacts
   Promo --> Mirror
   Promo --> Warm
@@ -76,7 +76,7 @@ This keeps public edge delivery fast without turning the canonical artifact buck
 
 Some older public launches are still valid but not mirrorable.
 
-Those are the ones handled by `legacy_artifact_promotions`:
+Those are the ones handled by the legacy promotion queue:
 
 - the request still serves the current artifact immediately;
 - a background promotion is queued;
@@ -87,20 +87,20 @@ Those are the ones handled by `legacy_artifact_promotions`:
 
 That is the current answer to "how do we get an old public launch off the Worker-only lane without breaking the open?"
 
-## Tables Worth Knowing
+## Control-Plane Records Worth Knowing
 
-The D1 side now makes the current shape visible through these tables:
+The D1 side now makes the current shape visible through these records and linked state:
 
-- `capsules`
-- `capsule_storage_modes`
-- `capsule_authored_layout_modes`
-- `r2_objects`
-- `blobs`
-- `capsule_blobs`
-- `dependency_objects`
-- `dependency_object_aliases`
-- `artifact_dependency_refs`
-- `public_artifact_mirror_leases`
-- `legacy_artifact_promotions`
+- capsule records
+- capsule storage mode state
+- capsule authored-layout state
+- R2 object index
+- blob store
+- capsule-blob links
+- dependency store
+- dependency aliases
+- artifact dependency links
+- public mirror lease state
+- legacy promotion queue
 
-If a question is about the current storage contract, those tables are usually the shortest path to the answer.
+If a question is about the current storage contract, those records are usually the shortest path to the answer.

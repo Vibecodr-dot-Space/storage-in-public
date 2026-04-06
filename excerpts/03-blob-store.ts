@@ -23,8 +23,7 @@
  * - Blobs ALWAYS go to the SHARED bucket (vibecodr-assets), regardless of user plan
  * - This enables cross-user deduplication without cross-user bucket dependencies
  * - Per-user buckets are still used for user-visible assets
- * - Users pay for their LOGICAL storage usage (virtual accounting)
- * - Platform keeps dedup savings as cost reduction
+ * - Logical usage stays separate from the physical blob copy so dedup remains stable
  *
  * WHY NOT PER-USER BUCKETS FOR BLOBS:
  * - Cross-user remix would create dependency on original uploader's bucket
