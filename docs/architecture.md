@@ -1,8 +1,10 @@
 # Architecture
 
+Last updated: 2026-04-05
+
 This is the high-level shape of the production storage subsystem behind Vibecodr.
 
-For concrete source-backed examples, cross-check this document with the files under [../excerpts](../excerpts/README.md).
+For the current contract first, cross-check this page with [current-contract.md](./current-contract.md).
 
 ## The Core Claim
 
@@ -10,12 +12,12 @@ Vibecodr does not treat storage as "an R2 bucket with some uploads."
 
 The storage system is a platform subsystem with at least six coupled concerns:
 
+- source-access intent shaping
+- authored-path identity and write normalization
 - byte storage in R2
 - ownership and lookup state in D1
-- plan-aware bucket selection
 - secure file serving
-- public artifact mirroring
-- cleanup and reconciliation
+- public artifact mirroring and repair
 
 That is why the private source modules are large. The complexity is structural, not decorative.
 
@@ -24,16 +26,20 @@ That is why the private source modules are large. The complexity is structural, 
 ```mermaid
 flowchart LR
   A["Studio / Web / Runtime"] --> B["API Worker"]
-  B --> C["D1 control plane"]
-  B --> D["Shared R2 bucket"]
-  B --> E["Dedicated user buckets"]
-  B --> F["Public assets bucket"]
-  B --> G["Public artifact mirror bucket"]
-  H["Scheduled jobs"] --> C
-  H --> D
-  H --> E
-  H --> F
-  H --> G
+  B --> C["sourceAccess SSOT"]
+  B --> D["authoredLayout + capsuleFiles"]
+  B --> E["D1 control plane"]
+  B --> F["Shared R2 bucket"]
+  B --> G["Dedicated user buckets"]
+  B --> H["Public assets bucket"]
+  B --> I["Public artifact mirror bucket"]
+  B --> J["Legacy promotion queue"]
+  K["Scheduled jobs"] --> E
+  K --> F
+  K --> G
+  K --> H
+  K --> I
+  K --> J
 ```
 
 ## The Buckets Are Not The Whole Story
@@ -42,7 +48,7 @@ The important system boundary is the Worker plus the D1 control plane.
 
 Why:
 
-- private reads need auth and origin checks
+- private reads need auth and intent shaping
 - response headers matter for dangerous file types
 - public eligibility can change after an artifact was once public
 - free-to-paid migrations can leave data in multiple bucket lanes
@@ -53,6 +59,20 @@ Relevant evidence:
 - [../excerpts/02-r2-buckets-fallback.ts](../excerpts/02-r2-buckets-fallback.ts)
 - [../excerpts/04-r2-object-index.ts](../excerpts/04-r2-object-index.ts)
 - [../excerpts/06-file-serving-security.ts](../excerpts/06-file-serving-security.ts)
+
+## Source Access And Authored Writes
+
+The current contract separates two questions that used to get blurred together:
+
+- what should a caller be allowed to see?
+- how should a caller's authored path be normalized before it is written?
+
+That split is owned by `sourceAccess`, `authoredLayout`, and `capsuleFiles`, not by whichever caller happens to be saving a file.
+
+Relevant evidence:
+
+- [../excerpts/11-source-access.ts](../excerpts/11-source-access.ts)
+- [../excerpts/12-authored-layout.ts](../excerpts/12-authored-layout.ts)
 
 ## Shared Bucket, Dedicated Bucket, Public Lanes
 
@@ -76,7 +96,7 @@ Relevant evidence:
 
 ## D1 Is The Storage Control Plane
 
-The `r2_objects` table is not a side table. It is the thing that lets the platform answer product questions:
+The D1 tables are where the platform answers product questions:
 
 - who owns this object
 - what category is it
@@ -84,20 +104,13 @@ The `r2_objects` table is not a side table. It is the thing that lets the platfo
 - how should it be served
 - can it be downloaded by object id or share token
 - what cleanup should happen if the backing bytes disappear
-
-The same applies to:
-
-- `blobs`
-- `capsule_blobs`
-- `dependency_objects`
-- `dependency_object_aliases`
-- `artifact_dependency_refs`
-- `public_artifact_mirror_leases`
+- what mode the capsule is in for storage and authored layout
+- whether a legacy public launch still needs promotion
 
 Relevant evidence:
 
 - [../excerpts/08-storage-schema.ts](../excerpts/08-storage-schema.ts)
-- [../reference/schema.sql](../reference/schema.sql)
+- [../docs/current-contract.md](./current-contract.md)
 
 ## The System Carries Migration History
 
@@ -107,6 +120,7 @@ The current architecture grew out of real problems:
 - free-to-paid storage transitions created cross-bucket reality
 - public runtime delivery could not safely share the canonical artifact lane
 - canonical blob storage had to be introduced without breaking old reads
+- legacy public launches needed a dedicated self-heal lane instead of a permanent Worker-only path
 
 That is why there are compatibility and fallback paths in the source.
 

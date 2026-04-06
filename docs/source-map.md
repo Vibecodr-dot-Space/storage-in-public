@@ -6,6 +6,18 @@ This document shows where the public evidence came from and why those files were
 
 ## Source Areas Used
 
+### Current contract owners
+
+- `workers/api/src/ssot/sourceAccess.ts`
+- `workers/api/src/storage/capsuleFiles.ts`
+- `workers/api/src/domain/studio/authoredLayout.ts`
+- `workers/api/src/runtime/publicArtifactMirror.ts`
+- `workers/api/src/runtime/publishedArtifactCacheWarm.ts`
+- `workers/api/src/services/storage/capsuleStorage.ts`
+- `workers/api/src/services/storage/storageDownloadService.ts`
+- `workers/api/src/security/fileServing.ts`
+- `workers/api/src/db/schema.ts`
+
 ### Storage Core
 
 - `workers/api/src/storage/r2.ts`
@@ -17,14 +29,14 @@ This document shows where the public evidence came from and why those files were
 
 ### Storage Services
 
-- `workers/api/src/services/storage/capsuleStorage.ts`
+- `workers/api/src/services/storage/capsuleGateway/index.ts`
 - `workers/api/src/services/storage/storageBrowserService.ts`
 - `workers/api/src/services/storage/storageDownloadService.ts`
-- `workers/api/src/services/storage/capsuleGateway/index.ts`
 
 ### Runtime Artifact Delivery
 
 - `workers/api/src/runtime/publicArtifactMirror.ts`
+- `workers/api/src/runtime/publishedArtifactCacheWarm.ts`
 - `workers/api/src/handlers/artifacts.ts`
 
 ### Security / Policy
@@ -41,12 +53,13 @@ This document shows where the public evidence came from and why those files were
 
 These files were chosen because together they show the real storage story:
 
+- intent-driven source access
+- authored write identity
 - key structure and lifecycle policy
 - shared vs dedicated bucket logic
 - deduplicated blob storage
 - D1-backed object indexing
 - public mirror behavior
-- secure file serving
 - migration compatibility
 - tests for ugly edge cases
 
@@ -58,12 +71,14 @@ These files were chosen because together they show the real storage story:
 | [../excerpts/02-r2-buckets-fallback.ts](../excerpts/02-r2-buckets-fallback.ts) | `storage/r2Buckets.ts` | free-to-paid compatibility and cross-bucket reads |
 | [../excerpts/03-blob-store.ts](../excerpts/03-blob-store.ts) | `storage/blobStore.ts` | shared physical dedup with logical accounting |
 | [../excerpts/04-r2-object-index.ts](../excerpts/04-r2-object-index.ts) | `storage/r2ObjectIndex.ts` | category-driven quota and visibility semantics |
-| [../excerpts/05-public-artifact-mirror.ts](../excerpts/05-public-artifact-mirror.ts) | `runtime/publicArtifactMirror.ts` | public runtime lane with leases and sentinel writes |
+| [../excerpts/05-public-artifact-mirror.ts](../excerpts/05-public-artifact-mirror.ts) | `runtime/publicArtifactMirror.ts` | public runtime lane with config gates, lease re-checks, cleanup, and sentinel writes |
 | [../excerpts/06-file-serving-security.ts](../excerpts/06-file-serving-security.ts) | `security/fileServing.ts` | storage as response-policy enforcement |
 | [../excerpts/07-capsule-gateway-canonicalization.ts](../excerpts/07-capsule-gateway-canonicalization.ts) | `services/storage/capsuleGateway/index.ts` | migration-compatible canonical blob storage |
 | [../excerpts/08-storage-schema.ts](../excerpts/08-storage-schema.ts) | `db/schema.ts` | D1 storage control-plane tables |
 | [../excerpts/09-r2-buckets.test.ts](../excerpts/09-r2-buckets.test.ts) | `storage/r2Buckets.test.ts` | tests for fallback behavior |
-| [../excerpts/10-public-artifact-mirror.test.ts](../excerpts/10-public-artifact-mirror.test.ts) | `runtime/publicArtifactMirror.test.ts` | tests for public mirror policy behavior |
+| [../excerpts/10-public-artifact-mirror.test.ts](../excerpts/10-public-artifact-mirror.test.ts) | `runtime/publicArtifactMirror.test.ts` | tests for mirror re-checks, cleanup, lease backoff, and launch freshness |
+| [../excerpts/11-source-access.ts](../excerpts/11-source-access.ts) | `ssot/sourceAccess.ts` | current intent-driven source access owner |
+| [../excerpts/12-authored-layout.ts](../excerpts/12-authored-layout.ts) | `domain/studio/authoredLayout.ts` and `storage/capsuleFiles.ts` | current authored-layout and authored-write owner |
 
 ## What We Left Out On Purpose
 

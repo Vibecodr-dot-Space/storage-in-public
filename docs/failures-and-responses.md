@@ -4,41 +4,39 @@ This document covers a few of the moments that shaped the current storage system
 
 Each section below points to an excerpt file in this repo.
 
-## 1. Capsule File Keys Were Too Broad
+## 1. Source Identity Had To Move Backend-Side
 
 What changed:
 
-- content-addressed capsule keys looked elegant
-- they were too broad for user-facing file storage
-- collisions in the wrong ownership context created real overwrite risk
+- source reads, clones, deploys, and exports were all trying to infer too much from the caller
+- the current contract now makes source-access intent explicit
 
 Where to see it:
 
-- [../excerpts/01-r2-storage-structure.ts](../excerpts/01-r2-storage-structure.ts)
+- [../excerpts/11-source-access.ts](../excerpts/11-source-access.ts)
 
 Where the system landed:
 
-- move canonical capsule file storage to safer per-capsule paths
-- keep backward compatibility for old locations while migrating away
+- keep source visibility decisions in the SSOT
+- shape viewer, studio, clone, export, compile, deploy, and operator snapshots differently
+- return the path truth the backend accepted instead of letting the client invent it
 
-## 2. Free-To-Paid Storage Is Not A One-Bucket Story
+## 2. Authored Writes Needed A Real Layout Mode
 
 What changed:
 
-- users can have objects in both shared and dedicated lanes after upgrades or partial migration
-- a naive "read from the current bucket only" model produces incomplete listings and surprising misses
+- authored-path identity used to be implied by whatever layout the client happened to send
+- legacy-preserve and standardized-authored modes now have explicit owners
 
 Where to see it:
 
-- [../excerpts/02-r2-buckets-fallback.ts](../excerpts/02-r2-buckets-fallback.ts)
-- [../excerpts/09-r2-buckets.test.ts](../excerpts/09-r2-buckets.test.ts)
+- [../excerpts/12-authored-layout.ts](../excerpts/12-authored-layout.ts)
 
 Where the system landed:
 
-- add a fallback bucket wrapper
-- merge listings across lanes
-- prefer primary bucket objects on key collision
-- test the weird cases directly
+- keep legacy-preserve capsules editable
+- standardize authored writes only when the backend owns the path identity
+- normalize manifest entry and authored file paths together so the write contract stays coherent
 
 ## 3. Deduplication Needed A Stronger Physical/Logical Split
 
@@ -55,26 +53,9 @@ Where the system landed:
 
 - keep deduplicated blobs in the shared lane
 - use D1 mappings and ref counts for logical ownership
-- let users pay for logical usage while the platform keeps physical dedup savings
+- let users pay for logical usage while the platform keeps dedup savings as cost reduction
 
-## 4. Bucket Contents Alone Were Not Enough
-
-What changed:
-
-- raw object storage cannot answer the platform's product questions by itself
-
-Where to see it:
-
-- [../excerpts/04-r2-object-index.ts](../excerpts/04-r2-object-index.ts)
-- [../excerpts/08-storage-schema.ts](../excerpts/08-storage-schema.ts)
-
-Where the system landed:
-
-- make `r2_objects` and related tables first-class
-- use category to drive quota and visibility semantics
-- use D1 as the control plane instead of pretending the bucket is the only source of truth
-
-## 5. Public Runtime Delivery Needed Its Own Lane
+## 4. Public Runtime Delivery Needed Its Own Lane
 
 What changed:
 
@@ -89,27 +70,32 @@ Where to see it:
 Where the system landed:
 
 - use a dedicated public artifact mirror bucket
-- gate mirroring with access policy
+- gate mirroring with publish config, access policy, and artifact-scoped bundle keys
 - lease the mirror operation in D1
+- re-check eligibility after the lease is claimed and again before commit
+- clean up stale public copies if access flips private mid-mirror
 - write a sentinel manifest copy last so "mirror complete" is observable
 
-## 6. Canonical Blob Storage Could Not Be A Flag Day
+## 5. Legacy Public Launches Could Not Stay on the Worker-Only Lane Forever
 
 What changed:
 
-- canonical blob storage is better, but old capsule reads still have to work during migration
+- some old public launches were cacheable, but their bundle keys could not be mirrored directly
+- leaving them forever on the Worker-only path was correct but slow
 
 Where to see it:
 
-- [../excerpts/07-capsule-gateway-canonicalization.ts](../excerpts/07-capsule-gateway-canonicalization.ts)
+- [../docs/current-contract.md](./current-contract.md)
 
 Where the system landed:
 
-- keep legacy-compatible reads
-- canonicalize lazily for mutation paths
-- verify coverage before flipping storage mode
+- queue a background promotion for the true legacy class
+- rebuild the artifact from the canonical capsule bundle
+- switch live posts through capsule lifecycle SSOT
+- warm and mirror the new runtime lane
+- refresh stale launch-contract mirror state when the old manifest copy is still around
 
-## 7. Serving User Files Is A Security Problem
+## 6. Serving User Files Is A Security Problem
 
 What changed:
 

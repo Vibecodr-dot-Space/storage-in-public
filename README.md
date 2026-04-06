@@ -1,28 +1,28 @@
 # storage-in-public
 
-This repo is a public tour of the storage system behind Vibecodr.
+This repo is a public tour of the Vibecodr storage system as it exists after the 0A / 0A.2 storage-contract work.
 
-It is not a generic storage framework. It is a source-backed explanation of how we use Cloudflare R2, D1, and Workers for uploads, runtime artifacts, public media, deduplicated blobs, secure serving, and cleanup.
+If you only read one page, start with [docs/current-contract.md](./docs/current-contract.md).
 
 ## What You Can Learn Quickly
 
 If you only have a few minutes, this repo should help you answer a few concrete questions:
 
-- Why is this more than "files in a bucket"?
-- How do private files, public media, and public runtime artifacts stay separate?
-- How do deduplicated blobs and quota accounting coexist?
-- How are dangerous user-controlled files served safely?
-- What kinds of migrations and repair paths does a system like this need?
+- How does `sourceAccess` decide what viewers, studios, clones, exports, compile lanes, deploy lanes, and operators can actually see?
+- How does backend-owned authored-path identity keep writes stable instead of letting the client invent path truth?
+- How do public runtime bundles stay edge-friendly without exposing the canonical artifact lane?
+- How do legacy public launches self-heal into the current runtime delivery system when they can no longer be mirrored directly?
 
 Start with:
 
-1. [docs/quick-tour.md](./docs/quick-tour.md)
-2. [docs/architecture.md](./docs/architecture.md)
-3. [excerpts/README.md](./excerpts/README.md)
+1. [docs/current-contract.md](./docs/current-contract.md)
+2. [docs/quick-tour.md](./docs/quick-tour.md)
+3. [docs/architecture.md](./docs/architecture.md)
+4. [excerpts/README.md](./excerpts/README.md)
 
 ## What Is In Here
 
-- docs that explain how the storage system is shaped and why
+- docs that explain the system in plain language
 - curated source excerpts from the production repo
 - selected test excerpts that pin tricky behavior
 - reference artifacts for schema and keyspace orientation
@@ -37,19 +37,24 @@ The actual subsystem is large and cross-coupled because it sits at the center of
 
 ## Reading Paths
 
-### If you want the big picture
+### If you want the current contract first
 
-- [docs/architecture.md](./docs/architecture.md)
+- [docs/current-contract.md](./docs/current-contract.md)
 - [docs/request-flows.md](./docs/request-flows.md)
 - [docs/data-model.md](./docs/data-model.md)
 
+### If you want the bigger shape
+
+- [docs/architecture.md](./docs/architecture.md)
+- [docs/quick-tour.md](./docs/quick-tour.md)
+- [docs/source-map.md](./docs/source-map.md)
+
 ### If you want the gritty source-backed bits
 
-- [excerpts/01-r2-storage-structure.ts](./excerpts/01-r2-storage-structure.ts)
-- [excerpts/02-r2-buckets-fallback.ts](./excerpts/02-r2-buckets-fallback.ts)
-- [excerpts/03-blob-store.ts](./excerpts/03-blob-store.ts)
+- [excerpts/11-source-access.ts](./excerpts/11-source-access.ts)
+- [excerpts/12-authored-layout.ts](./excerpts/12-authored-layout.ts)
 - [excerpts/05-public-artifact-mirror.ts](./excerpts/05-public-artifact-mirror.ts)
-- [excerpts/06-file-serving-security.ts](./excerpts/06-file-serving-security.ts)
+- [excerpts/08-storage-schema.ts](./excerpts/08-storage-schema.ts)
 - [excerpts/09-r2-buckets.test.ts](./excerpts/09-r2-buckets.test.ts)
 - [excerpts/10-public-artifact-mirror.test.ts](./excerpts/10-public-artifact-mirror.test.ts)
 
@@ -66,7 +71,7 @@ If you want the provenance and file map, see [docs/source-map.md](./docs/source-
 
 ## Cloudflare Context
 
-As of 2026-03-21, Cloudflare's R2 docs still shape some of the design decisions here:
+The design still follows the current Cloudflare R2 and Workers constraints that shape the live system:
 
 - [R2 presigned URLs](https://developers.cloudflare.com/r2/api/s3/presigned-urls/)
 - [R2 public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/)

@@ -1,45 +1,36 @@
 # Quick Tour
 
-This is the fast on-ramp.
+If you only want the current shape of the system, start with [current-contract.md](./current-contract.md).
 
-If you only want the shape of the system, these are the main ideas.
+If you only have a few minutes, these are the main ideas.
 
-## 1. The Storage System Is R2 Plus D1 Plus Workers
+## 1. The Storage System Is Still R2 Plus D1 Plus Workers
 
-R2 holds bytes.
+The storage core is still physical bytes in R2 and control-plane state in D1, with Workers deciding how requests are shaped.
 
-D1 holds:
+What changed in the 0A / 0A.2 contract work is that the owners are now explicit:
 
-- ownership
-- visibility
-- quota categories
-- object lookup metadata
-- blob and dependency references
-- mirror and cleanup state
-
-Workers decide:
-
-- which bucket to use
-- whether something is public or private
-- how files are served
-- when cleanup or mirroring should happen
+- `sourceAccess` owns what a viewer, studio, clone, export, compile, deploy, or operator can see.
+- `capsuleFiles` plus `authoredLayout` own authored-path identity and write normalization.
+- `publicArtifactMirror` plus `publishedArtifactCacheWarm` own public runtime delivery and warmup.
+- `legacy_artifact_promotions` owns self-healing for legacy public launches.
 
 See:
 
+- [current-contract.md](./current-contract.md)
 - [architecture.md](./architecture.md)
-- [../excerpts/04-r2-object-index.ts](../excerpts/04-r2-object-index.ts)
-- [../excerpts/08-storage-schema.ts](../excerpts/08-storage-schema.ts)
+- [../excerpts/11-source-access.ts](../excerpts/11-source-access.ts)
 
-## 2. There Are Multiple Storage Lanes
+## 2. There Are Still Multiple Storage Lanes
 
-The system uses:
+The system still uses:
 
 - a shared private bucket
 - dedicated private buckets for paid users
 - a public assets bucket
 - a separate public artifact mirror bucket
 
-That split exists because user media, private artifacts, and publicly cacheable runtime bundles have different serving and lifecycle needs.
+That split still exists because user media, private artifacts, canonical runtime artifacts, and publicly cacheable runtime bundles have different serving and lifecycle needs.
 
 See:
 
@@ -64,7 +55,7 @@ The system does not hand out private bucket access and call it done.
 Private reads go through:
 
 - auth
-- origin checks
+- source-access intent shaping
 - lookup in D1
 - secure response headers
 - CSP for dangerous file types
